@@ -72,6 +72,8 @@
   }
 )
 
+(define-map mine-inspections (string-ascii 50) (list 100 uint))
+
 (define-read-only (get-inspector (inspector principal))
   (map-get? inspectors inspector)
 )
@@ -154,6 +156,7 @@
         certifications: (list)
       }
     )
+    (map-set mine-inspections mine-id (list))
     (ok mine-id)
   )
 )
@@ -197,6 +200,11 @@
     )
     
     (var-set next-inspection-id (+ inspection-id u1))
+    (match (map-get? mine-inspections mine-id)
+      existing-list
+        (map-set mine-inspections mine-id (unwrap! (as-max-len? (append existing-list inspection-id) u100) err-invalid-input))
+      (map-set mine-inspections mine-id (list inspection-id))
+    )
     (ok inspection-id)
   )
 )
@@ -369,7 +377,7 @@
 )
 
 (define-read-only (get-mine-inspections (mine-id (string-ascii 50)))
-  (ok "use get-inspection with specific IDs")
+  (ok (default-to (list) (map-get? mine-inspections mine-id)))
 )
 
 (define-read-only (get-mine-hazards (mine-id (string-ascii 50)))
