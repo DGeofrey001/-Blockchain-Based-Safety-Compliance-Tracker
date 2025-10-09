@@ -12,6 +12,7 @@ Mining operations often face issues with falsified safety inspection reports. Th
 - 📊 **Compliance Scoring** - Real-time mine safety compliance scores
 - 🚨 **Hazard Reporting** - Immutable hazard incident logging
 
+- 🔄 **Ownership Transfers** - Seamless mine ownership transfers with data preservation
 ## 🚀 Quick Start
 
 ### Register as Inspector
@@ -57,6 +58,11 @@ Mining operations often face issues with falsified safety inspection reports. Th
   "VENTILATION" 
   u2000 
   "cert456...hash789")
+### Transfer Mine Ownership
+
+```clarity
+(contract-call? .safety-tracker transfer-mine-ownership "MINE001" 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM)
+```
 ```
 
 ## 📋 Contract Functions
@@ -79,6 +85,7 @@ Mining operations often face issues with falsified safety inspection reports. Th
 |----------|-------------|
 | `register-inspector` | Register new safety inspector |
 | `register-mine` | Register new mining operation |
+| `transfer-mine-ownership` | Transfer mine ownership to new principal |
 | `submit-inspection` | Submit safety inspection report |
 | `report-hazard` | Report safety hazard incident |
 | `issue-certification` | Issue safety certification |
@@ -112,6 +119,7 @@ Mining operations often face issues with falsified safety inspection reports. Th
 - Compliance score, last inspection
 - Active hazards, certifications list
 
+- ✅ Ownership transfer authorization
 ## 🛡️ Security Features
 
 - ✅ Inspector authorization checks

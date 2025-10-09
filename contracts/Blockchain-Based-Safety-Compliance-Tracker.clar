@@ -375,6 +375,22 @@
     err-not-found
   )
 )
+(define-public (transfer-mine-ownership (mine-id (string-ascii 50)) (new-owner principal))
+  (begin
+    (asserts! (is-some (map-get? mine-compliance mine-id)) err-not-found)
+    (match (map-get? mine-compliance mine-id)
+      mine-data
+        (begin
+          (asserts! (is-eq tx-sender (get owner mine-data)) err-unauthorized)
+          (map-set mine-compliance mine-id
+            (merge mine-data { owner: new-owner })
+          )
+          (ok true)
+        )
+      err-not-found
+    )
+  )
+)
 
 (define-read-only (get-mine-inspections (mine-id (string-ascii 50)))
   (ok (default-to (list) (map-get? mine-inspections mine-id)))
