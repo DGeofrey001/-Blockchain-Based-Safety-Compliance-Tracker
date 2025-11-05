@@ -13,6 +13,8 @@ Mining operations often face issues with falsified safety inspection reports. Th
 - 🚨 **Hazard Reporting** - Immutable hazard incident logging
 
 - 🔄 **Ownership Transfers** - Seamless mine ownership transfers with data preservation
+- 🔍 **Reinspection Requests** - Independent reinspection mechanism for disputed findings
+
 ## 🚀 Quick Start
 
 ### Register as Inspector
@@ -63,6 +65,14 @@ Mining operations often face issues with falsified safety inspection reports. Th
 ```clarity
 (contract-call? .safety-tracker transfer-mine-ownership "MINE001" 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM)
 ```
+
+### Request Reinspection
+
+```clarity
+(contract-call? .safety-tracker request-reinspection
+  u1
+  "Disputed findings - ventilation system not properly inspected"
+  "reinspect123...hash456")
 ```
 
 ## 📋 Contract Functions
@@ -78,6 +88,7 @@ Mining operations often face issues with falsified safety inspection reports. Th
 | `get-mine-compliance` | Get mine compliance data |
 | `check-compliance-status` | Check overall compliance status |
 | `is-certification-expired` | Check if certification is expired |
+| `get-reinspection` | Get reinspection details by ID |
 
 ### ✍️ Public Functions
 
@@ -92,6 +103,8 @@ Mining operations often face issues with falsified safety inspection reports. Th
 | `resolve-hazard` | Mark hazard as resolved |
 | `update-compliance-score` | Update mine compliance score |
 | `revoke-certification` | Revoke existing certification |
+| `request-reinspection` | Request reinspection for disputed findings |
+| `approve-reinspection` | Approve or reject reinspection request |
 
 ## 🏗️ Data Structures
 
@@ -118,6 +131,11 @@ Mining operations often face issues with falsified safety inspection reports. Th
 - Owner, name, location
 - Compliance score, last inspection
 - Active hazards, certifications list
+
+### Reinspection Record
+- Original inspection ID, reinspector
+- Timestamp, findings, evidence hash
+- Approval status
 
 - ✅ Ownership transfer authorization
 ## 🛡️ Security Features

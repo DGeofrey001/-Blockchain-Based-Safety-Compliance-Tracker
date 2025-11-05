@@ -10,8 +10,9 @@
 (define-data-var next-inspection-id uint u1)
 (define-data-var next-hazard-id uint u1)
 (define-data-var next-certification-id uint u1)
+(define-data-var next-reinspection-id uint u1)
 
-(define-map inspectors principal 
+(define-map inspectors principal
   {
     id: uint,
     name: (string-ascii 50),
@@ -74,6 +75,17 @@
 
 (define-map mine-inspections (string-ascii 50) (list 100 uint))
 
+(define-map reinspections uint
+  {
+    original-inspection-id: uint,
+    reinspector: principal,
+    timestamp: uint,
+    findings: (string-ascii 500),
+    evidence-hash: (string-ascii 64),
+    status: (string-ascii 20)
+  }
+)
+
 (define-read-only (get-inspector (inspector principal))
   (map-get? inspectors inspector)
 )
@@ -104,6 +116,14 @@
 
 (define-read-only (get-next-certification-id)
   (var-get next-certification-id)
+)
+
+(define-read-only (get-next-reinspection-id)
+  (var-get next-reinspection-id)
+)
+
+(define-read-only (get-reinspection (reinspection-id uint))
+  (map-get? reinspections reinspection-id)
 )
 
 (define-read-only (is-certification-expired (cert-id uint))
@@ -435,5 +455,40 @@
   (match (map-get? inspectors inspector)
     inspector-data (get active inspector-data)
     false
+  )
+)
+
+(define-public (request-reinspection (inspection-id uint) (findings (string-ascii 500)) (evidence-hash (string-ascii 64)))
+  (let ((reinspection-id (var-get next-reinspection-id)))
+    (asserts! (is-some (map-get? inspections inspection-id)) err-not-found)
+    (asserts! (is-some (map-get? inspectors tx-sender)) err-invalid-inspector)
+    (asserts! (> (len findings) u0) err-invalid-input)
+    (map-set reinspections reinspection-id
+      {
+        original-inspection-id: inspection-id,
+        reinspector: tx-sender,
+        timestamp: burn-block-height,
+        findings: findings,
+        evidence-hash: evidence-hash,
+        status: "PENDING"
+      }
+    )
+    (var-set next-reinspection-id (+ reinspection-id u1))
+    (ok reinspection-id)
+  )
+)
+
+(define-public (approve-reinspection (reinspection-id uint) (status (string-ascii 20)))
+  (match (map-get? reinspections reinspection-id)
+    reinspection
+      (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (is-eq (get status reinspection) "PENDING") err-invalid-input)
+        (map-set reinspections reinspection-id
+          (merge reinspection { status: status })
+        )
+        (ok true)
+      )
+    err-not-found
   )
 )
