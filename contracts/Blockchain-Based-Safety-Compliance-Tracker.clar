@@ -11,6 +11,7 @@
 (define-data-var next-hazard-id uint u1)
 (define-data-var next-certification-id uint u1)
 (define-data-var next-reinspection-id uint u1)
+(define-data-var next-shutdown-id uint u1)
 
 (define-map inspectors principal
   {
@@ -85,6 +86,18 @@
     status: (string-ascii 20)
   }
 )
+
+(define-map emergency-shutdowns uint
+  {
+    mine-id: (string-ascii 50),
+    initiator: principal,
+    timestamp: uint,
+    reason: (string-ascii 200),
+    active: bool
+  }
+)
+
+(define-map mine-shutdowns (string-ascii 50) bool)
 
 (define-read-only (get-inspector (inspector principal))
   (map-get? inspectors inspector)
@@ -192,6 +205,7 @@
   (let ((inspection-id (var-get next-inspection-id)))
     (asserts! (is-some (map-get? inspectors tx-sender)) err-invalid-inspector)
     (asserts! (is-some (map-get? mine-compliance mine-id)) err-not-found)
+    (asserts! (not (default-to false (map-get? mine-shutdowns mine-id))) err-invalid-input)
     (asserts! (> (len inspection-type) u0) err-invalid-input)
     (asserts! (> next-due burn-block-height) err-invalid-input)
     
@@ -458,6 +472,14 @@
   )
 )
 
+(define-read-only (get-emergency-shutdown (shutdown-id uint))
+  (map-get? emergency-shutdowns shutdown-id)
+)
+
+(define-read-only (get-next-shutdown-id)
+  (var-get next-shutdown-id)
+)
+
 (define-public (request-reinspection (inspection-id uint) (findings (string-ascii 500)) (evidence-hash (string-ascii 64)))
   (let ((reinspection-id (var-get next-reinspection-id)))
     (asserts! (is-some (map-get? inspections inspection-id)) err-not-found)
@@ -486,6 +508,48 @@
         (asserts! (is-eq (get status reinspection) "PENDING") err-invalid-input)
         (map-set reinspections reinspection-id
           (merge reinspection { status: status })
+        )
+        (ok true)
+      )
+    err-not-found
+  )
+)
+
+(define-public (initiate-emergency-shutdown (mine-id (string-ascii 50)) (reason (string-ascii 200)))
+  (let ((shutdown-id (var-get next-shutdown-id)))
+    (asserts! (or (is-eq tx-sender contract-owner) (is-some (map-get? inspectors tx-sender))) err-unauthorized)
+    (asserts! (is-some (map-get? mine-compliance mine-id)) err-not-found)
+    (asserts! (> (len reason) u0) err-invalid-input)
+    (map-set emergency-shutdowns shutdown-id
+      {
+        mine-id: mine-id,
+        initiator: tx-sender,
+        timestamp: burn-block-height,
+        reason: reason,
+        active: true
+      }
+    )
+    (match (map-get? mine-compliance mine-id)
+      mine-data
+        (map-set mine-compliance mine-id
+          (merge mine-data { compliance-score: u0 })
+        )
+      false
+    )
+    (map-set mine-shutdowns mine-id true)
+    (var-set next-shutdown-id (+ shutdown-id u1))
+    (ok shutdown-id)
+  )
+)
+
+(define-public (lift-emergency-shutdown (shutdown-id uint))
+  (match (map-get? emergency-shutdowns shutdown-id)
+    shutdown
+      (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (get active shutdown) err-invalid-input)
+        (map-set emergency-shutdowns shutdown-id
+          (merge shutdown { active: false })
         )
         (ok true)
       )

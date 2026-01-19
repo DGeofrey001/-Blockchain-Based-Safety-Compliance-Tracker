@@ -14,6 +14,7 @@ Mining operations often face issues with falsified safety inspection reports. Th
 
 - 🔄 **Ownership Transfers** - Seamless mine ownership transfers with data preservation
 - 🔍 **Reinspection Requests** - Independent reinspection mechanism for disputed findings
+- 🚨 **Emergency Shutdown Protocol** - Rapid response mechanism for critical safety incidents, halting operations and preventing new activities
 
 ## 🚀 Quick Start
 
@@ -89,6 +90,8 @@ Mining operations often face issues with falsified safety inspection reports. Th
 | `check-compliance-status` | Check overall compliance status |
 | `is-certification-expired` | Check if certification is expired |
 | `get-reinspection` | Get reinspection details by ID |
+| `get-emergency-shutdown` | Get emergency shutdown details by ID |
+| `get-next-shutdown-id` | Get next available shutdown ID |
 
 ### ✍️ Public Functions
 
@@ -136,6 +139,10 @@ Mining operations often face issues with falsified safety inspection reports. Th
 - Original inspection ID, reinspector
 - Timestamp, findings, evidence hash
 - Approval status
+
+### Emergency Shutdown Record
+- Mine ID, initiator, timestamp
+- Reason, active status
 
 - ✅ Ownership transfer authorization
 ## 🛡️ Security Features
